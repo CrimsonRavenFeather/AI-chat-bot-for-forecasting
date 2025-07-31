@@ -2,4 +2,5 @@
 myenv/
 .env
 temp.py
+demo_execution.ipynb
 demo_execution.py
