@@ -1,1 +1,4 @@
+# .gitignore
 myenv/
+.env
+temp.py
