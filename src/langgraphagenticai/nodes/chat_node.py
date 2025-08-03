@@ -10,16 +10,31 @@ function_map={}
 
 function_map["dummy_machine_learning_tools"]=machine_learning_tool.process
 
-def chat_node(model,api,state:State):
-    print("RUNNING LLM MODEL")
-    groq_llm = GROQ_LLM(model,api)
-    groq_llm_model=groq_llm.get_llm_model()
-    result=groq_llm_model.invoke(state["messages"])
-    if result.tool_calls:
-        function_name=result.tool_calls[0]["name"]
-        callable_function=function_map[function_name]
-        response=callable_function()
-        function_message=FunctionMessage(content=response,name=function_name)
-        state["messages"].append(function_message)
-    else:
-        state["messages"].append(result)
+class ChatNode:
+    def __init__(self,llm):
+        self.llm=llm
+
+    def chat_node(self, state: State):
+        groq_llm_model = self.llm
+        result = groq_llm_model.invoke(state["messages"])
+
+        if hasattr(result, "tool_calls") and result.tool_calls:
+            # Store original LLM message that triggered tool call
+            state["messages"].append(result)
+
+            function_name = result.tool_calls[0]["name"]
+            callable_function = function_map.get(function_name)
+            
+            if callable_function:
+                response = callable_function()
+                function_message = FunctionMessage(content=str(response), name=function_name)
+                state["messages"].append(function_message)
+
+                # OPTIONAL: You can now re-invoke LLM with updated state
+                follow_up = groq_llm_model.invoke(state["messages"])
+                state["messages"].append(follow_up)  # AI responds to tool output
+        else:
+            state["messages"].append(result)
+        
+        return state  # Return updated state
+

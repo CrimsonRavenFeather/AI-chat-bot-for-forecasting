@@ -7,3 +7,4 @@ langchain-groq
 pandas
 numpy 
 scikit-learn
+streamlit
